@@ -1,5 +1,5 @@
 #include "defocus_camera.h"
-#include <opencv2\core\cvdef.h>
+#include <opencv2/core/cvdef.h>
 
 vec3 random_in_unit_disk() {
 	vec3 p;

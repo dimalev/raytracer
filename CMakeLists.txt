@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project( RayTracer )
+find_package( OpenCV REQUIRED )
+find_package( Threads REQUIRED )
+add_executable( RayTracer RayTracerOne/main.cpp RayTracerOne/defocus_camera.cpp  RayTracerOne/hittable_list.cpp RayTracerOne/metal.cpp          RayTracerOne/sphear.cpp RayTracerOne/dielectric.cpp      RayTracerOne/lamberian.cpp      RayTracerOne/material.cpp  RayTracerOne/simple_camera.cpp )
+target_link_libraries( RayTracer ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT} ) 

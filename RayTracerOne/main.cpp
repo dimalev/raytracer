@@ -130,11 +130,14 @@ int main(int argc, char** argv)
 			0.2f, (lookfrom - lookat).length()
 		);
 
-		int m = viewport_width / 2;
+		int m = viewport_width / 3;
+    // build_image(image, cam, 0, viewport_width);
 		thread t1{ build_image, &image, &cam, 0, m};
-		thread t2{ build_image, &image, &cam, m, viewport_width };
+		thread t2{ build_image, &image, &cam, m, 2 * m };
+		thread t3{ build_image, &image, &cam, 2 * m, viewport_width };
 		t1.join();
 		t2.join();
+		t3.join();
 
 		sprintf(filename, "./film/image-%.3d.jpeg", i + 361);
 
