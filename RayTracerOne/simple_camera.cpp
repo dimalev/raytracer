@@ -3,7 +3,8 @@
 
 simple_camera::simple_camera() {}
 
-simple_camera::simple_camera(const vec3 &lookfrom, const vec3 &lookat, const vec3 &vup, float vfov, float aspect) {
+simple_camera::simple_camera(const vec3 &lookfrom, const vec3 &lookat,
+    const vec3 &vup, float vfov, float aspect, float time0, float time1) {
 	vec3 u, v, w;
 	float theta = vfov * CV_PI / 180.0f;
 	float half_height = tan(theta / 2.0f);
@@ -16,11 +17,14 @@ simple_camera::simple_camera(const vec3 &lookfrom, const vec3 &lookat, const vec
 	this->lower_left = this->origin - half_width * u - half_height * v - w;
 	this->vertical = 2 * half_height * v;
 	this->horizontal = 2 * half_width * u;
+  this->time0 = time0;
+  this->time1 = time1;
 }
 
 ray simple_camera::get_ray(float u, float v) {
 	return ray(
 		origin,
-		lower_left + u * vertical + v * horizontal - origin
+		lower_left + u * vertical + v * horizontal - origin,
+    time0 + drand48() * time1 - time0
 	);
 }

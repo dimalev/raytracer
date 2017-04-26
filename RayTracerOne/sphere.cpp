@@ -1,4 +1,4 @@
-#include "sphear.h"
+#include "sphere.h"
 
 sphere::sphere(const vec3 &center, float radius, material *mat) : C{ center }, R{ radius }, mat{ mat } { }
 

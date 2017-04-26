@@ -38,14 +38,14 @@ bool dielectric::scatter(const ray & in_ray, const hit_result & hitres, vec3 & a
 	}
 	if (refraction(in_ray.direction(), outward_normal, ni_over_nt, refracted)) {
 		if (frand() < schlick(cosine, refract)) {
-			scattered = ray(hitres.hit, reflected);
+			scattered = ray(hitres.hit, reflected, in_ray.time);
 		}
 		else {
-			scattered = ray(hitres.hit, refracted);
+			scattered = ray(hitres.hit, refracted, in_ray.time);
 		}
 	}
 	else {
-		scattered = ray(hitres.hit, reflected);
+		scattered = ray(hitres.hit, reflected, in_ray.time);
 	}
 
 	return true;

@@ -7,10 +7,11 @@
 
 #include "vec3.h"
 #include "ray.h"
-#include "defocus_camera.h"
+#include "simple_camera.h"
 #include "hittable.h"
 #include "hittable_list.h"
-#include "sphear.h"
+#include "moving_sphere.h"
+#include "sphere.h"
 #include "lambertian.h"
 #include "metal.h"
 #include "dielectric.h"
@@ -19,8 +20,8 @@ using namespace cv;
 using namespace std;
 
 const int pieces = 3;
-const int viewport_width = 960;
-const int viewport_height = 480;
+const int viewport_width = 320;
+const int viewport_height = 160;
 const int antialiasing = 100;
 
 vec3 color(const ray &r, const hittable &world, int depth) {
@@ -73,10 +74,15 @@ int main(int argc, char** argv)
 	int items = 5; int metals = 0, lamberts = 0, spheres = 0, balls = 0;
 	for (int a = -5; a < 3; ++a) {
 		for (int b = -5; b < 3; ++b) {
-			vec3 center{ float(a) + frand() * 0.6f, -0.2f - frand() / 4.0f, float(b) + frand() * 0.6f };
+			vec3 center0{ float(a) + frand() * 0.6f, -0.2f - frand() / 4.0f, float(b) + frand() * 0.6f };
+      vec3 center1{ center0 + frand() * vec3(0.2f, 0.2f, 0.2f) };
 			bool notClose = true;
 			for (int k = 0; k < 4; ++k) {
-				if ((center - static_cast<sphere*>(some[k])->C).length() < 1.1f) {
+				if ((center0 - static_cast<sphere*>(some[k])->C).length() < 1.1f) {
+					notClose = false;
+					break;
+				}
+				if ((center1 - static_cast<sphere*>(some[k])->C).length() < 1.1f) {
 					notClose = false;
 					break;
 				}
@@ -85,25 +91,37 @@ int main(int argc, char** argv)
 			int type = std::rand() % 3;
 			if (type == 0) {
 				++lamberts;
-				some[items++] = new sphere(
-					center,
-					0.2f, new lambertian{ vec3(frand(), frand(), frand()) }
+				// some[items++] = new sphere(
+				// 	center0,
+        //   0.2f, new lambertian{ vec3(frand(), frand(), frand()) }
+        // );
+				some[items++] = new moving_sphere(
+            0.2f, new lambertian{ vec3(frand(), frand(), frand()) },
+            center0, center1, 0.0f, 1.0f
 				);
 			}
 			else if (type == 1) {
 				dielectric *material = new dielectric{ frand() + 1.1f };
-				some[items++] = new sphere(center, 0.2f, material);
+				// some[items++] = new sphere(center0, 0.2f, material);
+				some[items++] = new moving_sphere(0.2f, material, center0, center1,
+                                          0.0f, 1.0f);
 				if (std::rand() % 2 == 0) {
-					some[items++] = new sphere(center, -0.19f, material);
+					// some[items++] = new sphere(center0, -0.19f, material);
+					some[items++] = new moving_sphere(-0.19f, material, center0,
+                                            center1, 0.0f, 1.0f);
 					++spheres;
 				}
 				else ++balls;
 			}
 			else if (type == 2) {
 				++metals;
-				some[items++] = new sphere(
-					center,
-					0.2f, new metal{ vec3(frand(), frand(), frand()), frand() / 2.0f }
+				// some[items++] = new sphere(
+				// 	center0,
+				// 	0.2f, new metal{ vec3(frand(), frand(), frand()), frand() / 2.0f }
+        // );
+				some[items++] = new moving_sphere(
+					0.2f, new metal{ vec3(frand(), frand(), frand()), frand() / 2.0f },
+          center0, center1, 0.0f, 1.0f
 				);
 			}
 		}
@@ -116,19 +134,28 @@ int main(int argc, char** argv)
 	world.list = some;
 	world.size = items;
 	char *filename = (char*)(malloc(25));
-	for (int i = -360; i < 360; ++i) {
+	// for (int i = -360; i < 360; ++i) {
+	for (int i = 0; i <= 0; ++i) {
 		Mat image{ viewport_height, viewport_width, CV_8UC3, Scalar{ 0,0,0 } };
 
 		vec3 lookfrom(sinf(float(i) * float(CV_PI) / 720.0f) * 4.0f, 0.5f, cosf(float(i) * float(CV_PI) / 720.0f) * 4.0f),
 			lookat(0.0f, 0.0f, -0.5f);
-		defocus_camera cam(
+		simple_camera cam(
 			//vec3(-2.0f, 2.0f, 1.0f),
 			lookfrom,
 			lookat,
 			vec3(0.0f, 1.0f, 0.0f),
 			60.0f, float(viewport_width) / float(viewport_height),
-			0.2f, (lookfrom - lookat).length()
+      0.0f, 1.0f
 		);
+		// defocus_camera cam(
+		// 	//vec3(-2.0f, 2.0f, 1.0f),
+		// 	lookfrom,
+		// 	lookat,
+		// 	vec3(0.0f, 1.0f, 0.0f),
+		// 	60.0f, float(viewport_width) / float(viewport_height),
+		// 	0.2f, (lookfrom - lookat).length()
+		// );
 
 		int m = viewport_width / 3;
     // build_image(image, cam, 0, viewport_width);
@@ -139,11 +166,13 @@ int main(int argc, char** argv)
 		t2.join();
 		t3.join();
 
-		sprintf(filename, "./film/image-%.3d.jpeg", i + 361);
+		// sprintf(filename, "./film/image-%.3d.jpeg", i + 361);
 
-		imwrite(filename, image);
+    namedWindow("Display window", WINDOW_AUTOSIZE); // Create a window for display.
+    imshow("Display window", image); // Show our image inside it.
+		// imwrite(filename, image);
 
-		std::cout << "image " << i << " finished." << std::endl;
+		// std::cout << "image " << i << " finished." << std::endl;
 	}
 	/*int median = 0;
 	thread* workers[pieces];
@@ -165,6 +194,6 @@ int main(int argc, char** argv)
 	//namedWindow("Display window", WINDOW_AUTOSIZE); // Create a window for display.
 	//imshow("Display window", image); // Show our image inside it.
 
-	//waitKey(0); // Wait for a keystroke in the window
+	waitKey(0); // Wait for a keystroke in the window
 	return 0;
 }
